@@ -74,7 +74,7 @@ Item {
 
         Text {
             anchors.centerIn: parent
-            text: "Hello XUPT"
+            text: "Hello WHLUG"
             font.pointSize: 40
         }
 

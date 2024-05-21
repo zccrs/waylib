@@ -36,7 +36,6 @@ WSurfacePrivate::WSurfacePrivate(WSurface *qq, QWSurface *handle)
 
 WSurfacePrivate::~WSurfacePrivate()
 {
-    instantRelease();
     if (buffer)
         buffer->unlock();
 }
@@ -240,6 +239,11 @@ WSurface::WSurface(WSurfacePrivate &dd, QObject *parent)
     , WObject(dd)
 {
     dd.init();
+}
+
+WSurface::~WSurface()
+{
+
 }
 
 QWSurface *WSurface::handle() const
@@ -461,13 +465,6 @@ void WSurface::unmap()
 {
     W_D(WSurface);
     wlr_surface_unmap(d->nativeHandle());
-}
-
-void WSurface::deleteLater()
-{
-    W_D(WSurface);
-    d->instantRelease();
-    QObject::deleteLater();
 }
 
 void WSurfacePrivate::instantRelease()

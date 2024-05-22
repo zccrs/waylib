@@ -90,13 +90,6 @@ void WXdgSurfacePrivate::instantRelease()
     surface = nullptr;
 }
 
-void WXdgSurface::deleteLater()
-{
-    W_D(WXdgSurface);
-    d->instantRelease();
-    QObject::deleteLater();
-}
-
 void WXdgSurfacePrivate::on_configure(wlr_xdg_surface_configure *event)
 {
     if (handle->topToplevel()) {
@@ -146,13 +139,14 @@ void WXdgSurfacePrivate::connect()
 {
     W_Q(WXdgSurface);
 
-    QObject::connect(handle, &QWXdgSurface::configure, q, [this] (wlr_xdg_surface_configure *event) {
+    WObject::safeConnect(q, &QWXdgSurface::configure, q, [this] (wlr_xdg_surface_configure *event) {
         on_configure(event);
     });
-    QObject::connect(handle, &QWXdgSurface::ackConfigure, q, [this] (wlr_xdg_surface_configure *event) {
+    WObject::safeConnect(q, &QWXdgSurface::ackConfigure, q, [this] (wlr_xdg_surface_configure *event) {
         on_ack_configure(event);
     });
 
+    // TODO: use safeConnect for toplevel
     if (auto toplevel = handle->topToplevel()) {
         QObject::connect(toplevel, &QWXdgToplevel::requestMove, q, [q] (wlr_xdg_toplevel_move_event *event) {
             auto seat = WSeat::fromHandle(QWSeat::from(event->seat->seat));

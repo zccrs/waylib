@@ -20,7 +20,8 @@ WObject::WObject(WObjectPrivate &dd, WObject *)
 
 WObject::~WObject()
 {
-
+    W_D(WObject);
+    d->invalidate();
 }
 
 WObjectPrivate *WObjectPrivate::get(WObject *qq)
@@ -81,14 +82,7 @@ bool WObject::safeDisconnect(const QMetaObject::Connection &connection)
     return QObject::disconnect(connection);
 }
 
-void WObject::safeDelete()
-{
-    W_D(WObject);
-    d->invalidate();
-    delete this;
-}
-
-void WObject::safeDeleteLater()
+void WWrapObject::safeDeleteLater()
 {
     W_D(WObject);
     d->invalidate();

@@ -88,9 +88,6 @@ Q_SIGNALS:
 
 protected:
     WSurface(WSurfacePrivate &dd, QObject *parent);
-    // destroy by safeDelete or safeDeleteLater
-    ~WSurface() override;
-    using QObject::deleteLater;
 };
 
 WAYLIB_SERVER_END_NAMESPACE

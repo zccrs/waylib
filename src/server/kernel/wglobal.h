@@ -88,7 +88,10 @@ protected:
 
     Q_DECLARE_PUBLIC(WObject)
 };
-
+template<typename T>
+concept IsPublicDestructible = requires(T *t){
+    delete t;
+};
 class WAYLIB_SERVER_EXPORT WObject
 {
 public:
@@ -139,25 +142,26 @@ public:
 
         // Isn't thread safety
         Q_ASSERT(QThread::currentThread() == sender->thread());
-        auto d = static_cast<const WObject*>(sender)->w_d_ptr.get();
+        auto d = static_cast<WWrapObjectPrivate*>(static_cast<const WWrapObject*>(sender)->w_d_ptr.get());
         Q_ASSERT(!d->invalidated);
         d->connections.append(connection);
         return connection;
     }
 
     template<typename T, typename Func1, typename Func2>
-    static typename std::enable_if<std::is_base_of<WObject, T>::value
-                                       && std::is_base_of<typename QtPrivate::FunctionPointer<Func1>::Object, decltype(T::handle())>::value,
-                                   QMetaObject::Connection>::type
-    safeConnect(const T *sender, Func1 signal, const QObject *receiver, Func2 slot,
-                Qt::ConnectionType type = Qt::AutoConnection) {
+    static QMetaObject::Connection
+    safeConnect(const T *sender, Func1 signal, const QObject *receiver, Func2 slot, Qt::ConnectionType type = Qt::AutoConnection)
+                requires std::is_base_of_v<WObject, T>
+                && (!std::is_base_of_v<WObject, typename QtPrivate::FunctionPointer<Func1>::Object>)
+                && requires(T t) { std::is_base_of_v<typename QtPrivate::FunctionPointer<Func1>::Object,decltype(*t.handle())>; }
+                {
         auto connection = QObject::connect(sender->handle(), signal, receiver, slot, type);
         if (!connection)
             return connection;
 
         // Isn't thread safety
         Q_ASSERT(QThread::currentThread() == sender->thread());
-        auto d = static_cast<const WObject*>(sender)->w_d_ptr.get();
+        auto d = static_cast<WWrapObjectPrivate*>(static_cast<const WWrapObject*>(sender)->w_d_ptr.get());
         Q_ASSERT(!d->invalidated);
         d->connections.append(connection);
         return connection;
@@ -166,7 +170,6 @@ public:
     bool safeDisconnect(const QObject *receiver);
     bool safeDisconnect(const QMetaObject::Connection &connection);
 
-    void safeDelete();
     // release resources requiring instant release, then QObject::deleteLater
     void safeDeleteLater();
 

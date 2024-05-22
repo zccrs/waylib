@@ -98,7 +98,7 @@ void WLayerSurfacePrivate::instantRelease()
     W_Q(WLayerSurface);
     handle->disconnect(q);
     handle->surface()->disconnect(q);
-    surface->deleteLater();
+    surface->safeDeleteLater();
     surface = nullptr;
 }
 
@@ -122,7 +122,7 @@ void WLayerSurfacePrivate::connect()
     // TODO(@rewine): Support popup surface
     //QObject::connect(handle, &QWLayerSurfaceV1::newPopup, q, [this] (QWXdgPopup *popup) {});
 
-    QObject::connect(handle->surface(), &QWSurface::commit, q, [this] () {
+    WObject::safeConnect(surface, &QWSurface::commit, q, [this] () {
         updateLayerProperty();
     });
 }
@@ -267,12 +267,6 @@ WLayerSurface::WLayerSurface(QWLayerSurfaceV1 *handle, QObject *parent)
 WLayerSurface::~WLayerSurface()
 {
 
-}
-
-void WLayerSurface::deleteLater()
-{
-    d_func()->instantRelease();
-    QObject::deleteLater();
 }
 
 bool WLayerSurface::isPopup() const

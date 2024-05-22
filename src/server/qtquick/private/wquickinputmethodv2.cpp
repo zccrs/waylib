@@ -68,7 +68,7 @@ public:
     {
         if (!popupSurface) {
             popupSurface = new WSurface(h->surface());
-            QObject::connect(h->surface(), &QWSurface::beforeDestroy, popupSurface, &WSurface::deleteLater);
+            QObject::connect(h->surface(), &QWSurface::beforeDestroy, popupSurface, &WSurface::safeDeleteLater);
         }
     }
 

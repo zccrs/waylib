@@ -148,5 +148,8 @@ Q_SIGNALS:
     void committed();
     void newPopupSurface(QW_NAMESPACE::QWInputPopupSurfaceV2 *surface);
     void newKeyboardGrab(QW_NAMESPACE::QWInputMethodKeyboardGrabV2 *keyboardGrab);
+
+private:
+    friend class WQuickInputMethodManagerV2;
 };
 WAYLIB_SERVER_END_NAMESPACE

@@ -90,12 +90,12 @@ void WSurfacePrivate::connect()
 {
     W_Q(WSurface);
 
-    QObject::connect(handle.get(), &QWSurface::commit, q, [this] {
+    WObject::safeConnect(q, &QWSurface::commit, q, [this] {
         on_commit();
     });
-    QObject::connect(handle.get(), &QWSurface::mapped, q, &WSurface::mappedChanged);
-    QObject::connect(handle.get(), &QWSurface::unmapped, q, &WSurface::mappedChanged);
-    QObject::connect(handle.get(), &QWSurface::newSubsurface, q, [q, this] (QWSubsurface *sub) {
+    WObject::safeConnect(q, &QWSurface::mapped, q, &WSurface::mappedChanged);
+    WObject::safeConnect(q, &QWSurface::unmapped, q, &WSurface::mappedChanged);
+    WObject::safeConnect(q, &QWSurface::newSubsurface, q, [q, this] (QWSubsurface *sub) {
         setHasSubsurface(true);
 
         auto surface = ensureSubsurface(sub->handle());
@@ -194,7 +194,7 @@ WSurface *WSurfacePrivate::ensureSubsurface(wlr_subsurface *subsurface)
 
     auto qwsurface = QWSurface::from(subsurface->surface);
     auto surface = new WSurface(qwsurface, q_func());
-    QObject::connect(qwsurface, &QWSurface::beforeDestroy, surface, &WSurface::deleteLater);
+    WObject::safeConnect(surface, &QWSurface::beforeDestroy, surface, [surface]{ surface->safeDeleteLater(); });
 
     return surface;
 }
@@ -241,11 +241,6 @@ WSurface::WSurface(WSurfacePrivate &dd, QObject *parent)
     dd.init();
 }
 
-WSurface::~WSurface()
-{
-
-}
-
 QWSurface *WSurface::handle() const
 {
     W_DC(WSurface);
@@ -267,7 +262,9 @@ WSurface *WSurface::fromHandle(wlr_surface *handle)
 bool WSurface::inputRegionContains(const QPointF &localPos) const
 {
     W_DC(WSurface);
-    return d->handle->pointAcceptsInput(localPos);
+    if (d->handle)
+        return d->handle->pointAcceptsInput(localPos);
+    return false;
 }
 
 bool WSurface::mapped() const

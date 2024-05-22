@@ -128,7 +128,7 @@ void WXWaylandPrivate::on_surface_destroy(QWXWaylandSurface *xwl_surface)
     bool ok = surfaceList.removeOne(surface);
     Q_ASSERT(ok);
     q_func()->surfaceRemoved(surface);
-    surface->deleteLater();
+    surface->safeDeleteLater();
 }
 
 WXWayland::WXWayland(QWCompositor *compositor, bool lazy)
@@ -206,10 +206,10 @@ void WXWayland::create(WServer *server)
     // free follow display
 
     auto handle = QWXWayland::create(server->handle(), d->compositor, d->lazy);
-    QObject::connect(handle, &QWXWayland::newSurface, this, [d] (wlr_xwayland_surface *surface) {
+    WObject::safeConnect(this, &QWXWayland::newSurface, this, [d] (wlr_xwayland_surface *surface) {
         d->on_new_surface(surface);
     });
-    QObject::connect(handle, &QWXWayland::ready, this, [d] {
+    WObject::safeConnect(this, &QWXWayland::ready, this, [d] {
         d->init();
     });
 
@@ -226,7 +226,7 @@ void WXWayland::destroy(WServer *server)
 
     for (auto surface : list) {
         surfaceRemoved(surface);
-        surface->deleteLater();
+        surface->safeDeleteLater();
     }
 }
 

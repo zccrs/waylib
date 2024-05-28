@@ -22,7 +22,7 @@ extern "C" {
 QW_USE_NAMESPACE
 WAYLIB_SERVER_BEGIN_NAMESPACE
 
-class Q_DECL_HIDDEN WXdgSurfacePrivate : public WObjectPrivate {
+class Q_DECL_HIDDEN WXdgSurfacePrivate : public WToplevelSurfacePrivate {
 public:
     WXdgSurfacePrivate(WXdgSurface *qq, QWXdgSurface *handle);
     ~WXdgSurfacePrivate();
@@ -60,7 +60,7 @@ public:
 };
 
 WXdgSurfacePrivate::WXdgSurfacePrivate(WXdgSurface *qq, QWXdgSurface *hh)
-    : WObjectPrivate(qq)
+    : WToplevelSurfacePrivate(qq)
     , handle(hh)
     , resizeing(false)
     , activated(false)
@@ -139,10 +139,10 @@ void WXdgSurfacePrivate::connect()
 {
     W_Q(WXdgSurface);
 
-    WObject::safeConnect(q, &QWXdgSurface::configure, q, [this] (wlr_xdg_surface_configure *event) {
+    WWrapObject::safeConnect(q, &QWXdgSurface::configure, q, [this] (wlr_xdg_surface_configure *event) {
         on_configure(event);
     });
-    WObject::safeConnect(q, &QWXdgSurface::ackConfigure, q, [this] (wlr_xdg_surface_configure *event) {
+    WWrapObject::safeConnect(q, &QWXdgSurface::ackConfigure, q, [this] (wlr_xdg_surface_configure *event) {
         on_ack_configure(event);
     });
 
@@ -190,8 +190,7 @@ void WXdgSurfacePrivate::connect()
 }
 
 WXdgSurface::WXdgSurface(QWXdgSurface *handle, QObject *parent)
-    : WToplevelSurface(parent)
-    , WObject(*new WXdgSurfacePrivate(this, handle))
+    : WToplevelSurface(*new WXdgSurfacePrivate(this, handle), parent)
 {
     d_func()->init();
 }

@@ -23,11 +23,11 @@ extern "C" {
 QW_USE_NAMESPACE
 WAYLIB_SERVER_BEGIN_NAMESPACE
 
-class WXWaylandSurfacePrivate : public WObjectPrivate
+class WXWaylandSurfacePrivate : public WToplevelSurfacePrivate
 {
 public:
     WXWaylandSurfacePrivate(WXWaylandSurface *qq, QWXWaylandSurface *handle, WXWayland *xwayland)
-        : WObjectPrivate(qq)
+        : WToplevelSurfacePrivate(qq)
         , handle(handle)
         , xwayland(xwayland)
         , maximized(false)
@@ -86,23 +86,23 @@ void WXWaylandSurfacePrivate::init()
     W_Q(WXWaylandSurface);
     handle->setData(this, q);
 
-    WObject::safeConnect(q, &QWXWaylandSurface::associate, q, [this, q] {
+    WWrapObject::safeConnect(q, &QWXWaylandSurface::associate, q, [this, q] {
         Q_ASSERT(!WSurface::fromHandle(handle->handle()->surface));
         surface = new WSurface(QWSurface::from(handle->handle()->surface), q);
         surface->setAttachedData<WXWaylandSurface>(q);
         Q_EMIT q->surfaceChanged();
     });
-    WObject::safeConnect(q, &QWXWaylandSurface::dissociate, q, [this, q] {
+    WWrapObject::safeConnect(q, &QWXWaylandSurface::dissociate, q, [this, q] {
         Q_ASSERT(surface);
         surface->safeDeleteLater();
         surface = nullptr;
         Q_EMIT q->surfaceChanged();
     });
-    WObject::safeConnect(q, &QWXWaylandSurface::parentChanged, q, [this] {
+    WWrapObject::safeConnect(q, &QWXWaylandSurface::parentChanged, q, [this] {
         updateParent();
     });
-    WObject::safeConnect(q, &QWXWaylandSurface::requestActivate, q, &WXWaylandSurface::requestActivate);
-    WObject::safeConnect(q, &QWXWaylandSurface::requestConfigure,
+    WWrapObject::safeConnect(q, &QWXWaylandSurface::requestActivate, q, &WXWaylandSurface::requestActivate);
+    WWrapObject::safeConnect(q, &QWXWaylandSurface::requestConfigure,
                      q, [this, q] (wlr_xwayland_surface_configure_event *event) {
         lastRequestConfigureGeometry = QRect(event->x, event->y, event->width, event->height);
         lastRequestConfigureFlags = WXWaylandSurface::ConfigureFlags(event->mask);
@@ -113,21 +113,21 @@ void WXWaylandSurfacePrivate::init()
             Q_EMIT q->requestConfigure(lastRequestConfigureGeometry, lastRequestConfigureFlags);
         }
     });
-    WObject::safeConnect(q, &QWXWaylandSurface::requestFullscreen, q, [this, q] {
+    WWrapObject::safeConnect(q, &QWXWaylandSurface::requestFullscreen, q, [this, q] {
         if (nativeHandle()->fullscreen) {
             Q_EMIT q->requestFullscreen();
         } else {
             Q_EMIT q->requestCancelFullscreen();
         }
     });
-    WObject::safeConnect(q, &QWXWaylandSurface::requestMaximize, q, [this, q] {
+    WWrapObject::safeConnect(q, &QWXWaylandSurface::requestMaximize, q, [this, q] {
         if (nativeHandle()->maximized_horz && nativeHandle()->maximized_vert) {
             Q_EMIT q->requestMaximize();
         } else {
             Q_EMIT q->requestCancelMaximize();
         }
     });
-    WObject::safeConnect(q, &QWXWaylandSurface::requestMinimize,
+    WWrapObject::safeConnect(q, &QWXWaylandSurface::requestMinimize,
                      q, [this, q] (wlr_xwayland_minimize_event *event) {
         if (event->minimize) {
             Q_EMIT q->requestMinimize();
@@ -135,27 +135,27 @@ void WXWaylandSurfacePrivate::init()
             Q_EMIT q->requestCancelMinimize();
         }
     });
-    WObject::safeConnect(q, &QWXWaylandSurface::requestMove,
+    WWrapObject::safeConnect(q, &QWXWaylandSurface::requestMove,
                      q, [this, q] {
         Q_EMIT q->requestMove(xwayland->seat(), 0);
     });
-    WObject::safeConnect(q, &QWXWaylandSurface::requestResize,
+    WWrapObject::safeConnect(q, &QWXWaylandSurface::requestResize,
                      q, [this, q] (wlr_xwayland_resize_event *event) {
         Q_EMIT q->requestResize(xwayland->seat(), WTools::toQtEdge(event->edges), 0);
     });
-    WObject::safeConnect(q, &QWXWaylandSurface::overrideRedirectChanged,
+    WWrapObject::safeConnect(q, &QWXWaylandSurface::overrideRedirectChanged,
                      q, &WXWaylandSurface::bypassManagerChanged);
-    WObject::safeConnect(q, &QWXWaylandSurface::geometryChanged,
+    WWrapObject::safeConnect(q, &QWXWaylandSurface::geometryChanged,
                      q, &WXWaylandSurface::geometryChanged);
-    WObject::safeConnect(handle, &QWXWaylandSurface::windowTypeChanged,
+    WWrapObject::safeConnect(q, &QWXWaylandSurface::windowTypeChanged,
                      q, [this] {
                          updateWindowTypes();
                      });
-    WObject::safeConnect(handle, &QWXWaylandSurface::decorationsChanged,
+    WWrapObject::safeConnect(q, &QWXWaylandSurface::decorationsChanged,
                      q, &WXWaylandSurface::decorationsTypeChanged);
-    WObject::safeConnect(q, &QWXWaylandSurface::titleChanged,
+    WWrapObject::safeConnect(q, &QWXWaylandSurface::titleChanged,
                      q, &WXWaylandSurface::titleChanged);
-    WObject::safeConnect(q, &QWXWaylandSurface::classChanged,
+    WWrapObject::safeConnect(q, &QWXWaylandSurface::classChanged,
                      q, &WXWaylandSurface::appIdChanged);
     updateChildren();
     updateParent();
@@ -255,8 +255,7 @@ void WXWaylandSurfacePrivate::updateWindowTypes()
 }
 
 WXWaylandSurface::WXWaylandSurface(QWXWaylandSurface *handle, WXWayland *xwayland, QObject *parent)
-    : WToplevelSurface(parent)
-    , WObject(*new WXWaylandSurfacePrivate(this, handle, xwayland))
+    : WToplevelSurface(*new WXWaylandSurfacePrivate(this, handle, xwayland), parent)
 {
     d_func()->init();
 }

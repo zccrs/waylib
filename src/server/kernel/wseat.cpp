@@ -73,11 +73,11 @@ protected:
 };
 #endif
 
-class WSeatPrivate : public WObjectPrivate
+class WSeatPrivate : public WWrapObjectPrivate
 {
 public:
     WSeatPrivate(WSeat *qq, const QString &name)
-        : WObjectPrivate(qq)
+        : WWrapObjectPrivate(qq)
         , name(name)
     {
         pendingEvents.reserve(2);
@@ -499,19 +499,19 @@ void WSeatPrivate::connect()
     QObject::connect(handle(), &QWSeat::destroyed, q_func()->server(), [this] {
         on_destroy();
     });
-    WObject::safeConnect(q, &QWSeat::requestSetCursor, q_func(), [this] (wlr_seat_pointer_request_set_cursor_event *event) {
+    WWrapObject::safeConnect(q, &QWSeat::requestSetCursor, q_func(), [this] (wlr_seat_pointer_request_set_cursor_event *event) {
         on_request_set_cursor(event);
     });
-    WObject::safeConnect(q, &QWSeat::requestSetSelection, q_func(), [this] (wlr_seat_request_set_selection_event *event) {
+    WWrapObject::safeConnect(q, &QWSeat::requestSetSelection, q_func(), [this] (wlr_seat_request_set_selection_event *event) {
         on_request_set_selection(event);
     });
-    WObject::safeConnect(q, &QWSeat::requestSetPrimarySelection, q_func(), [this] (wlr_seat_request_set_primary_selection_event *event) {
+    WWrapObject::safeConnect(q, &QWSeat::requestSetPrimarySelection, q_func(), [this] (wlr_seat_request_set_primary_selection_event *event) {
         on_request_set_primary_selection(event);
     });
-    WObject::safeConnect(q, &QWSeat::requestStartDrag, q_func(), [this] (wlr_seat_request_start_drag_event *event) {
+    WWrapObject::safeConnect(q, &QWSeat::requestStartDrag, q_func(), [this] (wlr_seat_request_start_drag_event *event) {
         on_request_start_drag(event);
     });
-    WObject::safeConnect(q, &QWSeat::startDrag, q_func(), [this] (wlr_drag *drag) {
+    WWrapObject::safeConnect(q, &QWSeat::startDrag, q_func(), [this] (wlr_drag *drag) {
         on_start_drag(drag);
     });
 }
@@ -575,7 +575,7 @@ void WSeatPrivate::detachInputDevice(WInputDevice *device)
 }
 
 WSeat::WSeat(const QString &name)
-    : WObject(*new WSeatPrivate(this, name))
+    : WWrapObject(*new WSeatPrivate(this, name))
 {
 
 }

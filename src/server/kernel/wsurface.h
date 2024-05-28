@@ -25,7 +25,7 @@ WAYLIB_SERVER_BEGIN_NAMESPACE
 class WServer;
 class WOutput;
 class WSurfacePrivate;
-class WAYLIB_SERVER_EXPORT WSurface : public QObject, public WObject
+class WAYLIB_SERVER_EXPORT WSurface : public WWrapObject
 {
     Q_OBJECT
     W_DECLARE_PRIVATE(WSurface)

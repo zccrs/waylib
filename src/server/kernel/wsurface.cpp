@@ -28,7 +28,7 @@ QW_USE_NAMESPACE
 WAYLIB_SERVER_BEGIN_NAMESPACE
 
 WSurfacePrivate::WSurfacePrivate(WSurface *qq, QWSurface *handle)
-    : WObjectPrivate(qq)
+    : WWrapObjectPrivate(qq)
     , handle(handle)
 {
 
@@ -90,12 +90,12 @@ void WSurfacePrivate::connect()
 {
     W_Q(WSurface);
 
-    WObject::safeConnect(q, &QWSurface::commit, q, [this] {
+    WWrapObject::safeConnect(q, &QWSurface::commit, q, [this] {
         on_commit();
     });
-    WObject::safeConnect(q, &QWSurface::mapped, q, &WSurface::mappedChanged);
-    WObject::safeConnect(q, &QWSurface::unmapped, q, &WSurface::mappedChanged);
-    WObject::safeConnect(q, &QWSurface::newSubsurface, q, [q, this] (QWSubsurface *sub) {
+    WWrapObject::safeConnect(q, &QWSurface::mapped, q, &WSurface::mappedChanged);
+    WWrapObject::safeConnect(q, &QWSurface::unmapped, q, &WSurface::mappedChanged);
+    WWrapObject::safeConnect(q, &QWSurface::newSubsurface, q, [q, this] (QWSubsurface *sub) {
         setHasSubsurface(true);
 
         auto surface = ensureSubsurface(sub->handle());
@@ -194,7 +194,7 @@ WSurface *WSurfacePrivate::ensureSubsurface(wlr_subsurface *subsurface)
 
     auto qwsurface = QWSurface::from(subsurface->surface);
     auto surface = new WSurface(qwsurface, q_func());
-    WObject::safeConnect(surface, &QWSurface::beforeDestroy, surface, [surface]{ surface->safeDeleteLater(); });
+    WWrapObject::safeConnect(surface, &QWSurface::beforeDestroy, surface, &WSurface::safeDeleteLater);
 
     return surface;
 }
@@ -235,8 +235,7 @@ WSurface::WSurface(QWSurface *handle, QObject *parent)
 }
 
 WSurface::WSurface(WSurfacePrivate &dd, QObject *parent)
-    : QObject(parent)
-    , WObject(dd)
+    : WWrapObject(dd, parent)
 {
     dd.init();
 }
@@ -330,7 +329,7 @@ void WSurface::enterOutput(WOutput *output)
     connect(output, &WOutput::destroyed, this, [d] {
         d->updateOutputs();
     });
-    connect(output, &WOutput::scaleChanged, this, [d] {
+   safeConnect(output, &WOutput::scaleChanged, this, [d] {
         d->updatePreferredBufferScale();
     });
 

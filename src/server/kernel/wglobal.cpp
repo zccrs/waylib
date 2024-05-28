@@ -20,8 +20,7 @@ WObject::WObject(WObjectPrivate &dd, WObject *)
 
 WObject::~WObject()
 {
-    W_D(WObject);
-    d->invalidate();
+
 }
 
 WObjectPrivate *WObjectPrivate::get(WObject *qq)
@@ -29,19 +28,42 @@ WObjectPrivate *WObjectPrivate::get(WObject *qq)
     return qq->d_func();
 }
 
-WObjectPrivate::~WObjectPrivate()
-{
-    // WObject must destroy by safeDelete or safeDeleteLater
-    Q_ASSERT(invalidated);
-}
-
 WObjectPrivate::WObjectPrivate(WObject *qq)
     : q_ptr(qq)
 {
 
 }
+WObjectPrivate::~WObjectPrivate()
+{
 
-void WObjectPrivate::invalidate()
+}
+
+WWrapObject::WWrapObject(WWrapObjectPrivate &d, QObject *parent)
+    : WObject(d, nullptr)
+    , QObject(parent)
+{
+
+}
+
+WWrapObject::~WWrapObject()
+{
+    W_D(WWrapObject);
+    d->invalidate();
+}
+
+WWrapObjectPrivate::WWrapObjectPrivate(WWrapObject *q)
+    : WObjectPrivate(q)
+{
+
+}
+
+WWrapObjectPrivate::~WWrapObjectPrivate()
+{
+    // WWrapObject must destroy by safeDelete or safeDeleteLater
+    Q_ASSERT(invalidated);
+}
+
+void WWrapObjectPrivate::invalidate()
 {
     invalidated = true;
     instantRelease();
@@ -50,9 +72,9 @@ void WObjectPrivate::invalidate()
     connections.clear();
 }
 
-bool WObject::safeDisconnect(const QObject *receiver)
+bool WWrapObject::safeDisconnect(const QObject *receiver)
 {
-    W_D(WObject);
+    W_D(WWrapObject);
     bool ok = false;
     for (int i = 0; i < d->connections.size(); ++i) {
         const QMetaObject::Connection &connection = d->connections.at(i);
@@ -72,9 +94,9 @@ bool WObject::safeDisconnect(const QObject *receiver)
     return ok;
 }
 
-bool WObject::safeDisconnect(const QMetaObject::Connection &connection)
+bool WWrapObject::safeDisconnect(const QMetaObject::Connection &connection)
 {
-    W_D(WObject);
+    W_D(WWrapObject);
     int index = d->connections.indexOf(connection);
     if (index < 0)
         return false;
@@ -84,7 +106,7 @@ bool WObject::safeDisconnect(const QMetaObject::Connection &connection)
 
 void WWrapObject::safeDeleteLater()
 {
-    W_D(WObject);
+    W_D(WWrapObject);
     d->invalidate();
 
     auto object = dynamic_cast<QObject*>(this);

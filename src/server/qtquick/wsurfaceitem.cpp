@@ -206,7 +206,7 @@ public:
         if (!textureProvider) {
             Q_ASSERT(surface);
             textureProvider = new WSGTextureProvider(const_cast<WSurfaceItemContent*>(q_func()));
-            updateTextureConnection = WObject::safeConnect(surface.get(), &WSurface::bufferChanged,
+            updateTextureConnection = WWrapObject::safeConnect(surface.get(), &WSurface::bufferChanged,
                                                            textureProvider,
                                                            &WSGTextureProvider::updateTexture);
         }
@@ -235,17 +235,17 @@ public:
     void init() {
         W_Q(WSurfaceItemContent);
 
-        WObject::safeConnect(surface.get(), &QWSurface::commit, q, [this] {
+        WWrapObject::safeConnect(surface, &QWSurface::commit, q, [this] {
             updateSurfaceState();
         });
-        WObject::safeConnect(surface.get(), &WSurface::primaryOutputChanged, q, [this] {
+        WWrapObject::safeConnect(surface, &WSurface::primaryOutputChanged, q, [this] {
             if (textureProvider)
                 textureProvider->maybeUpdateTextureOnSurfacePrrimaryOutputChanged();
         });
 
         if (textureProvider) {
             Q_ASSERT(!updateTextureConnection);
-            updateTextureConnection = WObject::safeConnect(surface, &WSurface::bufferChanged,
+            updateTextureConnection = WWrapObject::safeConnect(surface, &WSurface::bufferChanged,
                                                            textureProvider,
                                                            &WSGTextureProvider::updateTexture);
         }
@@ -453,7 +453,6 @@ void WSurfaceItemContent::itemChange(ItemChange change, const ItemChangeData &da
 {
     QQuickItem::itemChange(change, data);
     W_D(WSurfaceItemContent);
-
     if (change == QQuickItem::ItemSceneChange) {
         d->updateFrameDoneConnection();
     }
@@ -1039,8 +1038,8 @@ void WSurfaceItemPrivate::initForSurface()
 
     QObject::connect(surface->handle(), &QWSurface::beforeDestroy, q,
                      &WSurfaceItem::releaseResources, Qt::DirectConnection);
-    WObject::safeConnect(surface, &WSurface::hasSubsurfaceChanged, q, [this]{ onHasSubsurfaceChanged(); });
-    WObject::safeConnect(surface.get(), &QWSurface::commit, q, &WSurfaceItem::onSurfaceCommit);
+    WWrapObject::safeConnect(surface, &WSurface::hasSubsurfaceChanged, q, [this]{ onHasSubsurfaceChanged(); });
+    WWrapObject::safeConnect(surface, &QWSurface::commit, q, &WSurfaceItem::onSurfaceCommit);
 
     onHasSubsurfaceChanged();
     updateEventItem(false);
@@ -1298,5 +1297,4 @@ qreal WSurfaceItemPrivate::getImplicitHeight() const
 
 WAYLIB_SERVER_END_NAMESPACE
 
-#include "moc_wsurfaceitem.cpp"
 #include "wsurfaceitem.moc"

@@ -183,9 +183,6 @@ protected:
 
     void updateSurfaceState();
 
-private:
-    W_PRIVATE_SLOT(void onHasSubsurfaceChanged())
-
     friend class EventItem;
 };
 

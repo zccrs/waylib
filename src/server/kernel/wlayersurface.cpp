@@ -28,7 +28,7 @@ extern "C" {
 QW_USE_NAMESPACE
 WAYLIB_SERVER_BEGIN_NAMESPACE
 
-class Q_DECL_HIDDEN WLayerSurfacePrivate : public WObjectPrivate {
+class Q_DECL_HIDDEN WLayerSurfacePrivate : public WToplevelSurfacePrivate {
 public:
     WLayerSurfacePrivate(WLayerSurface *qq, QWLayerSurfaceV1 *handle);
     ~WLayerSurfacePrivate();
@@ -77,7 +77,7 @@ public:
 };
 
 WLayerSurfacePrivate::WLayerSurfacePrivate(WLayerSurface *qq, QWLayerSurfaceV1 *hh)
-    : WObjectPrivate(qq)
+    : WToplevelSurfacePrivate(qq)
     , handle(hh)
     , activated(false)
 {
@@ -122,7 +122,7 @@ void WLayerSurfacePrivate::connect()
     // TODO(@rewine): Support popup surface
     //QObject::connect(handle, &QWLayerSurfaceV1::newPopup, q, [this] (QWXdgPopup *popup) {});
 
-    WObject::safeConnect(surface, &QWSurface::commit, q, [this] () {
+    WWrapObject::safeConnect(surface, &QWSurface::commit, q, [this] () {
         updateLayerProperty();
     });
 }
@@ -258,8 +258,7 @@ bool WLayerSurfacePrivate::setKeyboardInteractivity(WLayerSurface::KeyboardInter
 // end set property
 
 WLayerSurface::WLayerSurface(QWLayerSurfaceV1 *handle, QObject *parent)
-    : WToplevelSurface(parent)
-    , WObject(*new WLayerSurfacePrivate(this, handle))
+    : WToplevelSurface(*new WLayerSurfacePrivate(this, handle), parent)
 {
     d_func()->init();
 }

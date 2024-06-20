@@ -104,9 +104,6 @@ set(SOURCES
     qtquick/private/wquicksocket.cpp
     qtquick/private/wqmlhelper.cpp
     qtquick/private/wquickxdgdecorationmanager.cpp
-    qtquick/private/wquickcursorshape.cpp
-    qtquick/private/wquickgammacontrol.cpp
-    qtquick/private/wquickoutputmanager.cpp
     qtquick/private/wquicklayershell.cpp
     qtquick/private/wquicktextinputv1.cpp
     qtquick/private/wquicktextinputv3.cpp
@@ -115,7 +112,6 @@ set(SOURCES
     qtquick/private/winputmethodhelper.cpp
     qtquick/private/wbufferrenderer.cpp
     qtquick/private/wrenderbuffernode.cpp
-    qtquick/private/wquickfractionalscalemanagerv1.cpp
     qtquick/private/wquickscreencopy.cpp
 
     ${CMAKE_CURRENT_BINARY_DIR}/text-input-unstable-v1-protocol.c
@@ -138,6 +134,8 @@ set(SOURCES
     protocols/wlayersurface.cpp
     protocols/wforeigntoplevelv1.cpp
     protocols/wxdgoutput.cpp
+    protocols/wcursorshapemanagerv1.cpp
+    protocols/woutputmanagerv1.cpp
 
     ${CMAKE_CURRENT_BINARY_DIR}/text-input-unstable-v1-protocol.c
 )
@@ -205,6 +203,10 @@ set(HEADERS
     protocols/WForeignToplevel
     protocols/wxdgoutput.h
     protocols/WXdgOutput
+    protocols/wcursorshapemanagerv1.h
+    protocols/WCursorShapeManagerV1
+    protocols/woutputmanagerv1.h
+    protocols/WOutputManagerV1
 )
 
 set(PRIVATE_HEADERS
@@ -219,9 +221,6 @@ set(PRIVATE_HEADERS
     qtquick/private/wqmldynamiccreator_p.h
     qtquick/private/wqmlhelper_p.h
     qtquick/private/wquickxdgdecorationmanager_p.h
-    qtquick/private/wquickcursorshape_p.h
-    qtquick/private/wquickgammacontrol_p.h
-    qtquick/private/wquickoutputmanager_p.h
     qtquick/private/wquicktextureproxy_p.h
     qtquick/private/wquicklayershell_p.h
     qtquick/private/wquicktextinputv1_p.h
@@ -232,7 +231,6 @@ set(PRIVATE_HEADERS
     qtquick/private/winputmethodhelper_p.h
     qtquick/private/wbufferrenderer_p.h
     qtquick/private/wrenderbuffernode_p.h
-    qtquick/private/wquickfractionalscalemanagerv1_p.h
     qtquick/private/wquickscreencopy_p.h
     qtquick/private/wsurfaceitem_p.h
 

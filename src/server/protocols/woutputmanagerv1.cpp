@@ -1,12 +1,13 @@
 // Copyright (C) 2023 rewine <luhongxu@deepin.org>.
 // SPDX-License-Identifier: Apache-2.0 OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
 
-#include "wquickoutputmanager_p.h"
+#include "woutputmanagerv1.h"
 #include "woutputitem.h"
 #include "woutputitem_p.h"
 #include "private/wglobal_p.h"
 
 #include <qwoutput.h>
+#include <qwoutputmanagementv1.h>
 
 extern "C" {
 #define static
@@ -20,18 +21,26 @@ using QW_NAMESPACE::QWOutputManagerV1;
 using QW_NAMESPACE::QWOutputConfigurationV1;
 using QW_NAMESPACE::QWOutputConfigurationHeadV1;
 
-class WQuickOutputManagerPrivate : public WObjectPrivate
+class WOutputManagerV1Private : public WObjectPrivate
 {
 public:
-    WQuickOutputManagerPrivate(WQuickOutputManager *qq)
+    WOutputManagerV1Private(WOutputManagerV1 *qq)
         : WObjectPrivate(qq)
     {
 
     }
 
-    W_DECLARE_PUBLIC(WQuickOutputManager)
+    W_DECLARE_PUBLIC(WOutputManagerV1)
 
     void outputMgrApplyOrTest(QWOutputConfigurationV1 *config, int test);
+    inline QWOutputManagerV1 *handle() const {
+        return q_func()->nativeInterface<QWOutputManagerV1>();
+    }
+
+    inline wlr_output_manager_v1 *nativeHandle() const {
+        Q_ASSERT(handle());
+        return handle()->handle();
+    }
 
     QWOutputManagerV1 *manager { nullptr };
     QPointer<WBackend> backend;
@@ -39,32 +48,15 @@ public:
     QList<WOutputState> stateListPending;
 };
 
-WQuickOutputManager::WQuickOutputManager(QObject *parent):
-    WQuickWaylandServerInterface(parent)
-  , WObject(*new WQuickOutputManagerPrivate(this), nullptr)
+WOutputManagerV1::WOutputManagerV1()
+    : WObject(*new WOutputManagerV1Private(this))
 {
 
 }
 
-WServerInterface *WQuickOutputManager::create()
+void WOutputManagerV1Private::outputMgrApplyOrTest(QWOutputConfigurationV1 *config, int onlyTest)
 {
-    W_D(WQuickOutputManager);
-
-    d->manager = QWOutputManagerV1::create(server()->handle());
-    connect(d->manager, &QWOutputManagerV1::test, this, [d](QWOutputConfigurationV1 *config) {
-        d->outputMgrApplyOrTest(config, true);
-    });
-
-    connect(d->manager, &QWOutputManagerV1::apply, this, [d](QWOutputConfigurationV1 *config) {
-        d->outputMgrApplyOrTest(config, false);
-    });
-
-    return new WServerInterface(d->manager, d->manager->handle()->global);
-}
-
-void WQuickOutputManagerPrivate::outputMgrApplyOrTest(QWOutputConfigurationV1 *config, int onlyTest)
-{
-    W_Q(WQuickOutputManager);
+    W_Q(WOutputManagerV1);
     wlr_output_configuration_head_v1 *config_head;
 
     stateListPending.clear();
@@ -92,15 +84,15 @@ void WQuickOutputManagerPrivate::outputMgrApplyOrTest(QWOutputConfigurationV1 *c
     Q_EMIT q->requestTestOrApply(config, onlyTest);
 }
 
-QList<WOutputState> WQuickOutputManager::stateListPending()
+QList<WOutputState> WOutputManagerV1::stateListPending()
 {
-    W_D(WQuickOutputManager);
+    W_D(WOutputManagerV1);
     return d->stateListPending;
 }
 
-void WQuickOutputManager::updateConfig()
+void WOutputManagerV1::updateConfig()
 {
-    W_D(WQuickOutputManager);
+    W_D(WOutputManagerV1);
 
     auto *config = QWOutputConfigurationV1::create();
 
@@ -115,9 +107,9 @@ void WQuickOutputManager::updateConfig()
     d->manager->setConfiguration(config);
 }
 
-void WQuickOutputManager::sendResult(QWOutputConfigurationV1 *config, bool ok)
+void WOutputManagerV1::sendResult(QWOutputConfigurationV1 *config, bool ok)
 {
-    W_D(WQuickOutputManager);
+    W_D(WOutputManagerV1);
     if (ok)
         config->sendSucceeded();
     else
@@ -130,9 +122,9 @@ void WQuickOutputManager::sendResult(QWOutputConfigurationV1 *config, bool ok)
     updateConfig();
 }
 
-void WQuickOutputManager::newOutput(WOutput *output)
+void WOutputManagerV1::newOutput(WOutput *output)
 {
-    W_D(WQuickOutputManager);
+    W_D(WOutputManagerV1);
     const auto *wlr_output = output->nativeHandle();
 
     auto *attached = output->findChild<WOutputItemAttached*>(QString(), Qt::FindDirectChildrenOnly);
@@ -155,14 +147,43 @@ void WQuickOutputManager::newOutput(WOutput *output)
     updateConfig();
 }
 
-void WQuickOutputManager::removeOutput(WOutput *output)
+void WOutputManagerV1::removeOutput(WOutput *output)
 {
-    W_D(WQuickOutputManager);
+    W_D(WOutputManagerV1);
     d->stateList.removeIf([output](const WOutputState &s) {
         return s.m_output == output;
     });
 
     updateConfig();
+}
+
+QWOutputManagerV1 *WOutputManagerV1::handle() const
+{
+    return nativeInterface<QWOutputManagerV1>();
+}
+
+void WOutputManagerV1::create(WServer *server)
+{
+    W_D(WOutputManagerV1);
+
+    d->manager = QWOutputManagerV1::create(server->handle());
+    connect(d->manager, &QWOutputManagerV1::test, this, [d](QWOutputConfigurationV1 *config) {
+        d->outputMgrApplyOrTest(config, true);
+    });
+
+    connect(d->manager, &QWOutputManagerV1::apply, this, [d](QWOutputConfigurationV1 *config) {
+        d->outputMgrApplyOrTest(config, false);
+    });
+}
+
+wl_global *WOutputManagerV1::global() const
+{
+    W_D(const WOutputManagerV1);
+
+    if (m_handle)
+        return d->nativeHandle()->global;
+
+    return nullptr;
 }
 
 WAYLIB_SERVER_END_NAMESPACE

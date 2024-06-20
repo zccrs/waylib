@@ -17,6 +17,8 @@
 #include <wqmldynamiccreator.h>
 #include <WForeignToplevel>
 #include <WXdgOutput>
+#include <woutputmanagerv1.h>
+#include <wcursorshapemanagerv1.h>
 
 #include <qwbackend.h>
 #include <qwdisplay.h>
@@ -26,6 +28,11 @@
 #include <qwrenderer.h>
 #include <qwcompositor.h>
 #include <qwsubcompositor.h>
+#include <qwfractionalscalemanagerv1.h>
+#include <qwgammacontorlv1.h>
+#include <woutputitem_p.h>
+#include <woutputitem.h>
+#include <woutputviewport.h>
 
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
@@ -38,12 +45,16 @@
 #include <QLoggingCategory>
 #include <QKeySequence>
 #include <QQmlComponent>
+#include <QVariant>
 
 extern "C" {
 #define static
 #include <wlr/types/wlr_output.h>
 #undef static
+#include <wlr/types/wlr_gamma_control_v1.h>
 }
+
+#define WLR_FRACTIONAL_SCALE_V1_VERSION 1
 
 inline QPointF getItemGlobalPosition(QQuickItem *item)
 {
@@ -138,6 +149,67 @@ void Helper::initProtocols(WServer *server, WOutputRenderWindow *window, QQmlEng
     Q_EMIT compositorChanged();
 
     window->init(m_renderer, m_allocator);
+
+    m_gammaControlManager = QWGammaControlManagerV1::create(server->handle());
+    connect(m_gammaControlManager, &QWGammaControlManagerV1::gammaChanged, this, [this]
+            (wlr_gamma_control_manager_v1_set_gamma_event *event) {
+                auto *qwOutput = QWOutput::from(event->output);
+                auto *wOutput = WOutput::fromHandle(qwOutput);
+                size_t ramp_size = 0;
+                uint16_t *r = nullptr, *g = nullptr, *b = nullptr;
+                wlr_gamma_control_v1 *gamma_control = event->control;
+                if (gamma_control) {
+                    ramp_size = gamma_control->ramp_size;
+                    r = gamma_control->table;
+                    g = gamma_control->table + gamma_control->ramp_size;
+                    b = gamma_control->table + 2 * gamma_control->ramp_size;
+                    if (!wOutput->setGammaLut(ramp_size, r, g, b)) {
+                        QWGammaControl::from(gamma_control)->sendFailedAndDestroy();
+                    }
+                }
+            });
+    m_wOutputManager = server->attach<WOutputManagerV1>();
+    connect(m_wOutputManager, &WOutputManagerV1::requestTestOrApply, this, [this]
+            (QWOutputConfigurationV1 *config, bool onlyTest) {
+                QList<WOutputState> states = m_wOutputManager->stateListPending();
+                bool ok = true;
+                for (auto state : states) {
+                    WOutput *output = state.m_output;
+                    output->enable(state.m_enabled);
+                    if (state.m_enabled) {
+                        if (state.m_mode)
+                            output->setMode(state.m_mode);
+                        else
+                            output->setCustomMode(state.m_custom_mode_size, state.m_custom_mode_refresh);
+
+                        output->enableAdaptiveSync(state.m_adaptive_sync_enabled);
+                        if (!onlyTest) {
+                            WOutputItemAttached *attached = static_cast<WOutputItemAttached *>(
+                                qmlAttachedPropertiesObject<WOutputItem>(output));
+                            if (!attached)
+                                attached = WOutputItem::qmlAttachedProperties(output);
+                            if (attached) {
+                                WOutputViewport *viewport = attached->item()->property("onscreenViewport").value<WOutputViewport *>();
+                                if (viewport) {
+                                    viewport->rotateOutput(state.m_transform);
+                                    viewport->setOutputScale(state.m_scale);
+                                    viewport->setX(state.m_x);
+                                    viewport->setY(state.m_y);
+                                }
+                            }
+                        }
+                    }
+
+                    if (onlyTest)
+                        ok &= output->test();
+                    else
+                        ok &= output->commit();
+                }
+                m_wOutputManager->sendResult(config, ok);
+            });
+
+    m_cursorShapeManager = server->attach<WCursorShapeManagerV1>();
+    m_fractionalScaleManagerV1 = QWFractionalScaleManagerV1::create(server->handle(), WLR_FRACTIONAL_SCALE_V1_VERSION);
     backend->handle()->start();
 }
 
@@ -361,7 +433,6 @@ std::pair<WOutput*,OutputInfo*> Helper::getFirstOutputOfSurface(WToplevelSurface
     }
     return std::make_pair(nullptr, nullptr);
 }
-
 
 void Helper::setMovingItem(WSurfaceItem *newMovingItem)
 {

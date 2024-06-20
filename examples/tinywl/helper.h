@@ -20,10 +20,14 @@ class WQuickCursor;
 class WOutputRenderWindow;
 class WQmlCreator;
 class WXdgOutputManager;
+class WCursorShapeManagerV1;
+class WOutputManagerV1;
 WAYLIB_SERVER_END_NAMESPACE
 
 QW_BEGIN_NAMESPACE
 class QWCompositor;
+class QWGammaControlManagerV1;
+class QWFractionalScaleManagerV1;
 QW_END_NAMESPACE
 
 struct wlr_output_event_request_state;
@@ -132,6 +136,11 @@ private:
         WSurfaceItem *resizingItem = nullptr;
         WSurfaceItem *movingItem = nullptr;
     } moveReiszeState;
+
+    QWFractionalScaleManagerV1 *m_fractionalScaleManagerV1 = nullptr;
+    WCursorShapeManagerV1 *m_cursorShapeManager = nullptr;
+    QWGammaControlManagerV1 *m_gammaControlManager = nullptr;
+    WOutputManagerV1 *m_wOutputManager = nullptr;
 };
 
 struct OutputInfo {

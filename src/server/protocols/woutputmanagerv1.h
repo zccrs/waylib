@@ -3,13 +3,16 @@
 
 #pragma once
 
-#include <wglobal.h>
-#include <wquickwaylandserver.h>
-#include <wbackend.h>
 #include <woutput.h>
-#include <qwoutputmanagementv1.h>
 
-#include <QQmlEngine>
+#include <WServer>
+
+#include <QObject>
+
+QW_BEGIN_NAMESPACE
+class QWOutputManagerV1;
+class QWOutputConfigurationV1;
+QW_END_NAMESPACE
 
 WAYLIB_SERVER_BEGIN_NAMESPACE
 
@@ -39,28 +42,28 @@ public:
     bool m_adaptive_sync_enabled;
 };
 
-class WQuickOutputManagerPrivate;
-class WAYLIB_SERVER_EXPORT WQuickOutputManager: public WQuickWaylandServerInterface, public WObject
+class WOutputManagerV1Private;
+class WAYLIB_SERVER_EXPORT WOutputManagerV1: public QObject, public WObject,  public WServerInterface
 {
     Q_OBJECT
-    W_DECLARE_PRIVATE(WQuickOutputManager)
-    QML_NAMED_ELEMENT(OutputManager)
+    W_DECLARE_PRIVATE(WOutputManagerV1)
 public:
-    explicit WQuickOutputManager(QObject *parent = nullptr);
+    explicit WOutputManagerV1();
 
-    Q_INVOKABLE void updateConfig();
-    Q_INVOKABLE QList<WOutputState> stateListPending();
+    void updateConfig();
+    QList<WOutputState> stateListPending();
 
-    Q_INVOKABLE void sendResult(QW_NAMESPACE::QWOutputConfigurationV1 *config, bool ok);
-
-    Q_INVOKABLE void newOutput(WOutput *output);
-    Q_INVOKABLE void removeOutput(WOutput *output);
+    void sendResult(QW_NAMESPACE::QWOutputConfigurationV1 *config, bool ok);
+    void newOutput(WOutput *output);
+    void removeOutput(WOutput *output);
+    QW_NAMESPACE::QWOutputManagerV1 *handle() const;
 
 Q_SIGNALS:
     void requestTestOrApply(QW_NAMESPACE::QWOutputConfigurationV1 *config, bool onlyTest);
 
-private:
-    WServerInterface *create() override;
+protected:
+    void create(WServer *server) override;
+    wl_global *global() const override;
 };
 
 WAYLIB_SERVER_END_NAMESPACE

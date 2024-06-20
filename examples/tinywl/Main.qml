@@ -13,38 +13,6 @@ Item {
     WaylandServer {
         id: server
 
-        WaylandBackend {
-            id: backend
-
-            onOutputAdded: function(output) {
-                if (!backend.hasDrm)
-                    output.forceSoftwareCursor = true // Test
-
-                Helper.allowNonDrmOutputAutoChangeMode(output)
-                QmlHelper.outputManager.add({waylandOutput: output})
-                outputManagerV1.newOutput(output)
-            }
-            onOutputRemoved: function(output) {
-                output.OutputItem.item.invalidate()
-                QmlHelper.outputManager.removeIf(function(prop) {
-                    return prop.waylandOutput === output
-                })
-                outputManagerV1.removeOutput(output)
-            }
-            onInputAdded: function(inputDevice) {
-                seat0.addDevice(inputDevice)
-            }
-            onInputRemoved: function(inputDevice) {
-                seat0.removeDevice(inputDevice)
-            }
-        }
-
-        WaylandCompositor {
-            id: compositor
-
-            backend: backend
-        }
-
         XdgShell {
             id: shell
 
@@ -70,19 +38,6 @@ Item {
                     return prop.waylandSurface === surface
                 })
             }
-        }
-
-        Seat {
-            id: seat0
-            name: "seat0"
-            cursor: Cursor {
-                id: cursor1
-                themeName: cursorThemeName
-                layout: QmlHelper.layout
-            }
-
-            eventFilter: Helper
-            keyboardFocus: Helper.getFocusSurfaceFrom(renderWindow.activeFocusItem)
         }
 
         GammaControlManager {
@@ -168,8 +123,8 @@ Item {
 
         XWayland {
             id: xwayland
-            compositor: compositor.compositor
-            seat: seat0.seat
+            compositor: Helper.compositor
+            seat: Helper.seat
             lazy: false
 
             onReady: function () {
@@ -188,7 +143,7 @@ Item {
 
         // for the non-xwayland clients
         XdgOutputManager {
-            layout: QmlHelper.layout
+            layout: Helper.outputLayout
             exclusionTargetClients: true
             targetClients: xwaylandXdgOutputManager.targetClients
         }
@@ -196,7 +151,7 @@ Item {
         // for the xwayland clients
         XdgOutputManager {
             id: xwaylandXdgOutputManager
-            layout: QmlHelper.layout
+            layout: Helper.outputLayout
             scaleOverride: 1.0
             exclusionTargetClients: false
             objectName: "XdgOutputManagerForXWayalnd"
@@ -205,9 +160,21 @@ Item {
         ScreenCopyManager { }
     }
 
+    Binding {
+        target: Helper.seat
+        property: "keyboardFocus"
+        value: Helper.getFocusSurfaceFrom(renderWindow.activeFocusItem)
+    }
+
+    Binding {
+        target: QmlHelper
+        property: "masterSocket"
+        value: masterSocket
+    }
+
     InputMethodHelper {
         id: inputMethodHelperSeat0
-        seat: seat0
+        seat: Helper.seat
         textInputManagerV1: textInputManagerV1
         textInputManagerV3: textInputManagerV3
         inputMethodManagerV2: inputMethodManagerV2
@@ -226,9 +193,8 @@ Item {
     OutputRenderWindow {
         id: renderWindow
 
-        compositor: compositor
-        width: QmlHelper.layout.implicitWidth
-        height: QmlHelper.layout.implicitHeight
+        width: Helper.outputLayout.implicitWidth
+        height: Helper.outputLayout.implicitHeight
 
         onOutputViewportInitialized: function (viewport) {
             // Trigger QWOutput::frame signal in order to ensure WOutputHelper::renderable
@@ -241,17 +207,11 @@ Item {
         }
 
         Item {
-            id: outputLayout
-
             DynamicCreatorComponent {
-                id: outputDelegateCreator
-                creator: QmlHelper.outputManager
+                creator: Helper.outputCreator
 
                 OutputDelegate {
                     property real topMargin: topbar.height
-                    waylandCursor: cursor1
-                    x: { x = QmlHelper.layout.implicitWidth }
-                    y: 0
                 }
             }
         }

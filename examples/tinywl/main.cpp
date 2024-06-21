@@ -30,6 +30,7 @@
 #include <qwsubcompositor.h>
 #include <qwxwaylandsurface.h>
 #include <qwlayershellv1.h>
+#include <qwscreencopyv1.h>
 
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>

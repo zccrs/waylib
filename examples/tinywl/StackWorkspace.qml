@@ -102,13 +102,13 @@ Item {
                 Connections {
                     target: QmlHelper.xdgDecorationManager
                     onSurfaceModeChanged: {
-                        if (waylandSurface === surface)
-                            enable = mode === XdgDecorationManager.Client
+                        if (waylandSurface.surface === surface)
+                            enable = mode === XdgDecorationManager.Server
                     }
                 }
 
                 Component.onCompleted: {
-                    enable = QmlHelper.xdgDecorationManager.modeBySurface(waylandSurface) === XdgDecorationManager.Client
+                    enable = QmlHelper.xdgDecorationManager.modeBySurface(waylandSurface.surface) === XdgDecorationManager.Server
                 }
             }
 

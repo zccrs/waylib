@@ -36,7 +36,7 @@ public:
 
     void setModeBySurface(WSurface *surface, DecorationMode mode);
 
-    DecorationMode modeBySurface(WSurface* surface) const;
+    Q_INVOKABLE DecorationMode modeBySurface(WSurface* surface) const;
 
 Q_SIGNALS:
     void surfaceModeChanged(WSurface *surface, DecorationMode mode);

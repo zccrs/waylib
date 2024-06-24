@@ -7,6 +7,8 @@
 #include <QJSValue>
 #include <QQuickItem>
 #include <QQmlInfo>
+#include <qassert.h>
+#include <qqml.h>
 #include <private/qqmlcomponent_p.h>
 
 WAYLIB_SERVER_BEGIN_NAMESPACE
@@ -353,9 +355,10 @@ void WQmlCreatorComponent::setAutoDestroy(bool newAutoDestroy)
     Q_EMIT autoDestroyChanged();
 }
 
-WQmlCreator::WQmlCreator(QObject *parent)
+WQmlCreator::WQmlCreator(QQmlEngine *engine, QObject *parent)
     : QObject{parent}
     , WObject(*new WQmlCreatorPrivate(this))
+    , m_engine(engine)
 {
 
 }
@@ -543,13 +546,12 @@ int WQmlCreator::indexOfOwner(QObject *owner) const
 
 int WQmlCreator::indexOf(QJSValue function) const
 {
-    auto engine = qmlEngine(this);
-    Q_ASSERT(engine);
+    Q_ASSERT(m_engine);
 
     W_DC(WQmlCreator);
 
     for (int i = 0; i < d->datas.size(); ++i) {
-        if (function.call({engine->toScriptValue(d->datas.at(i)->properties)}).toBool())
+        if (function.call({m_engine->toScriptValue(d->datas.at(i)->properties)}).toBool())
             return i;
     }
 

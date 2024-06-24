@@ -63,11 +63,11 @@ Helper::Helper(QObject *parent)
     , m_outputLayout(new WQuickOutputLayout(this))
     , m_cursor(new WQuickCursor(this))
     , m_seat(new WSeat())
-    , m_outputCreator(new WQmlCreator(this))
-    , m_xdgShellCreator(new WQmlCreator(this))
-    , m_xwaylandCreator(new WQmlCreator(this))
-    , m_layerShellCreator(new WQmlCreator(this))
-    , m_inputPopupCreator(new WQmlCreator(this))
+    , m_outputCreator(new WQmlCreator(qmlEngine(this), this))
+    , m_xdgShellCreator(new WQmlCreator(qmlEngine(this), this))
+    , m_xwaylandCreator(new WQmlCreator(qmlEngine(this), this))
+    , m_layerShellCreator(new WQmlCreator(qmlEngine(this), this))
+    , m_inputPopupCreator(new WQmlCreator(qmlEngine(this), this))
 {
     m_seat->setEventFilter(this);
     m_seat->setCursor(m_cursor);

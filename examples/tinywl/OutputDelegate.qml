@@ -1,61 +1,39 @@
-// Copyright (C) 2023 JiDe Zhang <zccrs@live.com>.
+// Copyright (C) 2024 UnionTech Software Technology Co., Ltd.
 // SPDX-License-Identifier: Apache-2.0 OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
 
 import QtQuick
 import QtQuick.Controls
 import Waylib.Server
-import Tinywl
 
 OutputItem {
     id: rootOutputItem
     required property WaylandOutput waylandOutput
-    property OutputViewport onscreenViewport: outputViewport
-    property Cursor lastActiveCursorItem
+    readonly property OutputViewport onscreenViewport: outputViewport
+    readonly property alias keepAllOutputRotation: rotationAllOutputsOption.checked
 
     output: waylandOutput
-    devicePixelRatio: waylandOutput.scale
+    devicePixelRatio: waylandOutput?.scale ?? devicePixelRatio
 
     cursorDelegate: Cursor {
         id: cursorItem
 
-        required property QtObject outputCurosr
         readonly property point position: parent.mapFromGlobal(cursor.position.x, cursor.position.y)
 
-        cursor: outputCurosr.cursor
-        output: outputCurosr.output.output
         x: position.x - hotSpot.x
         y: position.y - hotSpot.y
-        visible: valid && outputCurosr.visible
+        visible: cursor.visible
         OutputLayer.enabled: true
         OutputLayer.keepLayer: true
         OutputLayer.outputs: [onscreenViewport]
         OutputLayer.flags: OutputLayer.Cursor
         OutputLayer.cursorHotSpot: hotSpot
+    }
 
-        function updateActiveCursor() {
-            if (cursorItems.size === 1) {
-                lastActiveCursorItem = this;
-                return;
-            }
-
-            const pos = onscreenViewport.mapToOutput(this, Qt.point(0, 0));
-            if (pos.x >= 0 && pos.x < onscreenViewport.width
-                    && pos.y >= 0 && pos.y < onscreenViewport.height) {
-                lastActiveCursorItem = this;
-            }
-        }
-
-        onXChanged: updateActiveCursor()
-        onYChanged: updateActiveCursor()
-
-        SurfaceItem {
-            id: dragIcon
-            parent: cursorItem.parent
-            z: cursorItem.z - 1
-            flags: SurfaceItem.DontCacheLastBuffer
-            surface: cursorItem.cursor.requestedDragSurface
-            x: cursorItem.position.x
-            y: cursorItem.position.y
+    Shortcut {
+        sequences: [StandardKey.Quit]
+        context: Qt.ApplicationShortcut
+        onActivated: {
+            Qt.quit()
         }
     }
 
@@ -114,94 +92,6 @@ OutputItem {
         anchors.fill: parent
     }
 
-    Component {
-        id: outputScaleEffect
-
-        OutputViewport {
-            readonly property OutputItem outputItem: waylandOutput.OutputItem.item
-
-            id: viewport
-            input: this
-            output: waylandOutput
-            devicePixelRatio: outputViewport.devicePixelRatio
-            anchors.fill: outputViewport
-            rotation: outputViewport.rotation
-
-            TextureProxy {
-                sourceItem: outputViewport
-                anchors.fill: parent
-            }
-
-            Item {
-                width: outputItem.width
-                height: outputItem.height
-                anchors.centerIn: parent
-                rotation: -outputViewport.rotation
-
-                Item {
-                    y: 10
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    width: parent.width / 2
-                    height: parent.height / 3
-                    clip: true
-
-                    Item {
-                        id: centerItem
-                        width: 1
-                        height: 1
-                        anchors.centerIn: parent
-                        rotation: outputViewport.rotation
-
-                        TextureProxy {
-                            id: magnifyingLens
-
-                            sourceItem: outputViewport
-                            smooth: false
-                            scale: 10
-                            transformOrigin: Item.TopLeft
-                            width: viewport.width
-                            height: viewport.height
-
-                            function updatePosition() {
-                                const pos = outputItem.lastActiveCursorItem.mapToItem(outputViewport, Qt.point(0, 0))
-                                x = - pos.x * scale
-                                y = - pos.y * scale
-                            }
-
-                            Connections {
-                                target: outputItem.lastActiveCursorItem
-
-                                function onXChanged() {
-                                    magnifyingLens.updatePosition()
-                                }
-
-                                function onYChanged() {
-                                    magnifyingLens.updatePosition()
-                                }
-                            }
-
-                            Component.onCompleted: updatePosition()
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    Text {
-        anchors.bottom: parent.bottom
-        text: {
-            if (!lastActiveCursorItem)
-                return "";
-            let layer = lastActiveCursorItem.OutputLayer;
-            return layer.inOutputsByHardware.includes(onscreenViewport)
-                    ? "Hardware Cursor"
-                    : "Software Cursor";
-        }
-        color: "red"
-        font.pointSize: 20
-    }
-
     Column {
         anchors {
             bottom: parent.bottom
@@ -212,40 +102,8 @@ OutputItem {
         spacing: 10
 
         Switch {
-            property OutputViewport outputViewportEffect
-
-            text: "Magnifying Lens"
-            onCheckedChanged: {
-                if (checked) {
-                    outputViewport.cacheBuffer = true
-                    outputViewport.offscreen = true
-                    outputViewportEffect = outputScaleEffect.createObject(outputViewport.parent)
-                    onscreenViewport = outputViewportEffect
-                } else {
-                    outputViewportEffect.invalidate()
-                    outputViewportEffect.destroy()
-                    outputViewport.offscreen = false
-                    outputViewport.cacheBuffer = false
-                    onscreenViewport = outputViewport
-                }
-            }
-        }
-
-        Switch {
-            text: "Socket"
-            checked: true
-            onCheckedChanged: {
-                Helper.setSocketEnabled(checked)
-            }
-        }
-
-        Switch {
-            text: "Hardware Cursor"
-            checkable: false
-            checked: !onscreenViewport.disableHardwareLayers
-            onClicked: {
-                onscreenViewport.disableHardwareLayers = !onscreenViewport.disableHardwareLayers
-            }
+            id: rotationAllOutputsOption
+            text: "Rotation All Outputs"
         }
 
         Button {
@@ -314,5 +172,7 @@ OutputItem {
         onscreenViewport.setOutputScale(scale)
     }
 
-    Component.onDestruction: onscreenViewport.invalidate()
+    function invalidate() {
+        onscreenViewport.invalidate()
+    }
 }

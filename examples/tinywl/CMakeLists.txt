@@ -10,59 +10,47 @@ if(POLICY CMP0071)
     cmake_policy(SET CMP0071 NEW)
 endif()
 
-set(QML_IMPORT_PATH "${PROJECT_BINARY_DIR}/src/server;${QML_IMPORT_PATH}" CACHE STRING "For LSP" FORCE)
-option(START_DEMO "Start demo when boot" ON)
+set(QML_IMPORT_PATH ${CMAKE_BINARY_DIR}/src/server/ CACHE STRING "" FORCE)
 
 find_package(PkgConfig REQUIRED)
 pkg_search_module(PIXMAN REQUIRED IMPORTED_TARGET pixman-1)
 pkg_search_module(WAYLAND REQUIRED IMPORTED_TARGET wayland-server)
 
-add_executable(tinywl-qtquick
+set(TARGET tinywl-qtquick)
+
+add_executable(${TARGET}
     main.cpp
 )
 
-set_source_files_properties(QmlHelper.qml
-    PROPERTIES
-        QT_QML_SINGLETON_TYPE TRUE
-)
-
-qt_add_qml_module(tinywl-qtquick
+qt_add_qml_module(${TARGET}
     URI Tinywl
-    VERSION "1.0"
+    VERSION "2.0"
+    QML_FILES
+
     SOURCES
         helper.h
-    QML_FILES
-        Main.qml
-        StackWorkspace.qml
-        XdgSurface.qml
-        LayerSurface.qml
-        TiledWorkspace.qml
-        QmlHelper.qml
-        OutputDelegate.qml
-        StackToplevelHelper.qml
-        TiledToplevelHelper.qml
-        WindowDecoration.qml
-        CloseAnimation.qml
-        MiniDock.qml
-        InputPopupSurface.qml
+        QML_FILES OutputDelegate.qml
+        QML_FILES CopyOutputDelegate.qml
+        SOURCES helper.cpp
+        SOURCES outputlayout.h outputlayout.cpp
 )
 
-target_compile_definitions(tinywl-qtquick
+target_compile_definitions(${TARGET}
     PRIVATE
-    PROJECT_BINARY_DIR="${PROJECT_BINARY_DIR}"
+    SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}"
     $<$<BOOL:${START_DEMO}>:START_DEMO>
     WLR_USE_UNSTABLE
 )
 
-target_link_libraries(tinywl-qtquick
+target_link_libraries(${TARGET}
     PRIVATE
     Qt6::Quick
     Qt6::QuickControls2
-    Waylib::WaylibServer
+    waylibserver
     PkgConfig::PIXMAN
     PkgConfig::WAYLAND
 )
 
 if (INSTALL_TINYWL)
-    install(TARGETS tinywl-qtquick DESTINATION ${CMAKE_INSTALL_BINDIR})
+    install(TARGETS ${TARGET} DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()

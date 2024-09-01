@@ -163,8 +163,8 @@ WlClientDestroyListener::~WlClientDestroyListener()
 
 WlClientDestroyListener *WlClientDestroyListener::get(const wl_client *client)
 {
-    wl_listener *listener = wl_client_get_destroy_listener(const_cast<wl_client*>(client),
-                                                           WlClientDestroyListener::handle_destroy);
+    wl_listener *listener = wl_client_get_destroy_late_listener(const_cast<wl_client*>(client),
+                                                                WlClientDestroyListener::handle_destroy);
     if (!listener) {
         return nullptr;
     }
@@ -228,7 +228,7 @@ public:
         , socket(socket)
     {
         auto listener = new WlClientDestroyListener(qq);
-        wl_client_add_destroy_listener(handle, &listener->destroy);
+        wl_client_add_destroy_late_listener(handle, &listener->destroy);
     }
 
     ~WClientPrivate() {

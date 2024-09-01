@@ -149,7 +149,8 @@ Item {
 
             Loader {
                 id: effectLoader
-                active: cornerRadius > 0 && (wrapper?.decoration?.visible ?? false)
+                active: (cornerRadius > 0 && (wrapper?.decoration?.visible ?? false))
+                        || (wrapper?.freeze ?? false)
                 anchors.fill: parent
                 sourceComponent: MultiEffect {
                     anchors.fill: parent
@@ -173,6 +174,10 @@ Item {
                     }
 
                     maskEnabled: true
+                    blurEnabled: wrapper.freeze
+                    blurMax: 128
+                    blur: 1.0
+                    autoPaddingEnabled: false
                 }
             }
         }

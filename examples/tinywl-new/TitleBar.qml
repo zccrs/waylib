@@ -22,6 +22,14 @@ Rectangle {
         }
     }
 
+    Button {
+        anchors.centerIn: parent
+        text: surface.freeze ? "Unfreeze" : "Freeze"
+        onClicked: {
+            surface.freeze = !surface.freeze;
+        }
+    }
+
     Row {
         anchors {
             verticalCenter: parent.verticalCenter

@@ -24,8 +24,6 @@ WClient *WObject::waylandClient() const
         return nullptr;
 
     auto wclient = WClient::get(client);
-    Q_ASSERT(wclient);
-
     return wclient;
 }
 

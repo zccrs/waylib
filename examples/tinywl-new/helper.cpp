@@ -844,6 +844,11 @@ void Helper::addSurface(SurfaceWrapper *surface)
 {
     m_surfaceList << surface;
 
+    auto client = surface->surface()->waylandClient();
+    auto surfaceListInClient = qvariant_cast<QList<SurfaceWrapper*>>(client->property("__surfaceListInClient"));
+    surfaceListInClient << surface;
+    client->setProperty("__surfaceListInClient", QVariant::fromValue(surfaceListInClient));
+
     connect(surface, &SurfaceWrapper::requestMove, this, [this] {
         auto surface = qobject_cast<SurfaceWrapper*>(sender());
         Q_ASSERT(surface);
@@ -915,6 +920,13 @@ void Helper::destroySurface(WSurface *surface)
 
     if (wrapper->type() != SurfaceWrapper::Type::Layer)
         m_workspace->removeSurface(wrapper);
+
+    auto client = surface->waylandClient();
+    if (client) {
+        auto surfaceListInClient = qvariant_cast<QList<SurfaceWrapper*>>(client->property("__surfaceListInClient"));
+        surfaceListInClient.removeOne(wrapper);
+        client->setProperty("__surfaceListInClient", QVariant::fromValue(surfaceListInClient));
+    }
 
     delete wrapper;
 }

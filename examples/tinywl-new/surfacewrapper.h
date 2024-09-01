@@ -41,6 +41,7 @@ class SurfaceWrapper : public QQuickItem
     Q_PROPERTY(SurfaceContainer* container READ container NOTIFY containerChanged FINAL)
     Q_PROPERTY(QQuickItem* titleBar READ titleBar NOTIFY noDecorationChanged FINAL)
     Q_PROPERTY(QQuickItem* decoration READ decoration NOTIFY noDecorationChanged FINAL)
+    Q_PROPERTY(bool freeze READ freeze WRITE setFreeze NOTIFY freezeChanged FINAL)
 
 public:
     enum class Type {
@@ -124,6 +125,9 @@ public:
     QQuickItem *titleBar() const;
     QQuickItem *decoration() const;
 
+    bool freeze() const;
+    void setFreeze(bool newFreeze);
+
 public Q_SLOTS:
     // for titlebar
     void requestMinimize();
@@ -149,6 +153,7 @@ signals:
     void requestResize(Qt::Edges edges);
     void geometryChanged();
     void containerChanged();
+    void freezeChanged();
 
 private:
     using QQuickItem::setParentItem;
@@ -159,6 +164,7 @@ private:
     void setNoDecoration(bool newNoDecoration);
     void setBoundedRect(const QRectF &newBoundedRect);
     void setContainer(SurfaceContainer *newContainer);
+    void doSetFreeze(bool freeze);
     void updateBoundedRect();
     void updateVisible();
     void updateImplicitHeight();
@@ -187,4 +193,5 @@ private:
     State m_surfaceState = State::Normal;
     bool m_noDecoration = true;
     qreal m_radius = 18.0;
+    bool m_freeze = false;
 };

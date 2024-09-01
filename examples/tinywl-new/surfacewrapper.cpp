@@ -11,6 +11,11 @@
 #include <wxwaylandsurfaceitem.h>
 #include <wxwaylandsurface.h>
 #include <woutputitem.h>
+#include <wsocket.h>
+
+#include <QDBusInterface>
+#include <QDBusUnixFileDescriptor>
+#include <QDBusPendingReply>
 
 SurfaceWrapper::SurfaceWrapper(QmlEngine *qmlEngine, WToplevelSurface *shellSurface, Type type, QQuickItem *parent)
     : QQuickItem(parent)
@@ -596,6 +601,12 @@ void SurfaceWrapper::setContainer(SurfaceContainer *newContainer)
     emit containerChanged();
 }
 
+void SurfaceWrapper::doSetFreeze(bool newFreeze)
+{
+    m_freeze = newFreeze;
+    emit freezeChanged();
+}
+
 QQuickItem *SurfaceWrapper::titleBar() const
 {
     return m_titleBar;
@@ -604,4 +615,35 @@ QQuickItem *SurfaceWrapper::titleBar() const
 QQuickItem *SurfaceWrapper::decoration() const
 {
     return m_decoration;
+}
+
+bool SurfaceWrapper::freeze() const
+{
+    return m_freeze;
+}
+
+void SurfaceWrapper::setFreeze(bool newFreeze)
+{
+    return doSetFreeze(newFreeze);
+    if (m_freeze == newFreeze)
+        return;
+
+    QDBusInterface neverhang("org.deepin.neverhang", "/", "org.deepin.neverhang");
+    if (!neverhang.isValid())
+        return;
+
+    auto client = surface()->waylandClient();
+    auto pending =  neverhang.asyncCall(newFreeze ? "AddFreezerQueue" : "DelFreezerQueue",
+                                       QVariant::fromValue(QDBusUnixFileDescriptor(client->pidFD())));
+    auto watcher = new QDBusPendingCallWatcher(pending, client);
+    connect(watcher, &QDBusPendingCallWatcher::finished, client, [client, newFreeze] (QDBusPendingCallWatcher *watcher) {
+        QDBusPendingReply<bool> reply = *watcher;
+        if (!reply.value())
+            return;
+
+        const auto surfaceListInClient = qvariant_cast<QList<SurfaceWrapper*>>(client->property("__surfaceListInClient"));
+        for (SurfaceWrapper *s : surfaceListInClient) {
+            s->doSetFreeze(newFreeze);
+        }
+    });
 }

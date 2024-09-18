@@ -3,6 +3,7 @@
 
 #include "surfacecontainer.h"
 #include "output.h"
+#include "rootsurfacecontainer.h"
 
 SurfaceListModel::SurfaceListModel(QObject *parent)
     : QAbstractListModel(parent)
@@ -165,13 +166,16 @@ SurfaceContainer::~SurfaceContainer()
     }
 }
 
-SurfaceContainer *SurfaceContainer::rootContainer() const
+RootSurfaceContainer *SurfaceContainer::rootContainer() const
 {
     SurfaceContainer *root = const_cast<SurfaceContainer*>(this);
     while (auto p = root->parentContainer()) {
         root = p;
     }
-    return root;
+
+    auto r = qobject_cast<RootSurfaceContainer*>(root);
+    Q_ASSERT(r);
+    return r;
 }
 
 SurfaceContainer *SurfaceContainer::parentContainer() const

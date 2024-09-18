@@ -43,7 +43,7 @@ private:
 class SurfaceFilterModel : public SurfaceListModel
 {
     Q_OBJECT
-    QML_ELEMENT
+    QML_ANONYMOUS
 
 public:
     explicit SurfaceFilterModel(SurfaceListModel *parent);
@@ -87,17 +87,19 @@ private:
 };
 
 class Output;
+class RootSurfaceContainer;
 class SurfaceContainer : public QQuickItem
 {
     Q_OBJECT
-    QML_ELEMENT
+    Q_PROPERTY(SurfaceListModel* model READ model CONSTANT FINAL)
+    QML_ANONYMOUS
 
 public:
     explicit SurfaceContainer(QQuickItem *parent = nullptr);
     explicit SurfaceContainer(SurfaceContainer *parent);
     ~SurfaceContainer() override;
 
-    SurfaceContainer *rootContainer() const;
+    RootSurfaceContainer *rootContainer() const;
     SurfaceContainer *parentContainer() const;
     QList<SurfaceContainer*> subContainers() const;
     void setQmlEngine(QQmlEngine *engine);
@@ -110,6 +112,10 @@ public:
 
     const QList<SurfaceWrapper*> &surfaces() const {
         return m_model->surfaces();
+    }
+
+    SurfaceListModel *model() const {
+        return m_model;
     }
 
 signals:

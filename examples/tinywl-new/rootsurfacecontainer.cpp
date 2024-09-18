@@ -350,6 +350,11 @@ void RootSurfaceContainer::setPrimaryOutput(Output *newPrimaryOutput)
     emit primaryOutputChanged();
 }
 
+const QList<Output *> &RootSurfaceContainer::outputs() const
+{
+    return m_outputList;
+}
+
 void RootSurfaceContainer::ensureCursorVisible()
 {
     const auto cursorPos = m_cursor->position();

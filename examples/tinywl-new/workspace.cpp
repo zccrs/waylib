@@ -17,6 +17,7 @@ Workspace::Workspace(SurfaceContainer *parent)
     : SurfaceContainer(parent)
 {
     createContainer(true);
+    createContainer(false);
 }
 
 void Workspace::addSurface(SurfaceWrapper *surface, int workspaceIndex)
@@ -121,6 +122,29 @@ void Workspace::setCurrentIndex(int newCurrentIndex)
     }
 
     emit currentChanged();
+}
+
+void Workspace::switchToNext()
+{
+    if (m_currentIndex < m_containers.size() - 1)
+        switchTo(m_currentIndex + 1);
+}
+
+void Workspace::switchToPrev()
+{
+    if (m_currentIndex > 0)
+        switchTo(m_currentIndex - 1);
+}
+
+void Workspace::switchTo(int index)
+{
+    Q_ASSERT(index >= 0 && index < m_containers.size());
+    auto container = m_containers.at(index);
+    auto engine = Helper::instance()->qmlEngine();
+
+    for (auto o : rootContainer()->outputs()) {
+        auto switcher = engine->createWorkspaceSwitcher(this, container, o);
+    }
 }
 
 WorkspaceContainer *Workspace::currentworkspace() const

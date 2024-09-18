@@ -47,6 +47,7 @@ public:
     Output *cursorOutput() const;
     Output *primaryOutput() const;
     void setPrimaryOutput(Output *newPrimaryOutput);
+    const QList<Output*> &outputs() const;
 
     void addOutput(Output *output) override;
     void removeOutput(Output *output) override;

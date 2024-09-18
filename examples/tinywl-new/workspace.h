@@ -10,6 +10,7 @@ class WorkspaceContainer : public SurfaceContainer
 {
     friend class Workspace;
     Q_OBJECT
+    QML_ANONYMOUS
 
 public:
     explicit WorkspaceContainer(Workspace *parent);
@@ -20,6 +21,7 @@ class Workspace : public SurfaceContainer
     Q_OBJECT
     Q_PROPERTY(int currentIndex READ currentIndex WRITE setCurrentIndex NOTIFY currentChanged FINAL)
     Q_PROPERTY(WorkspaceContainer* currentworkspace READ currentworkspace NOTIFY currentChanged FINAL)
+    QML_ANONYMOUS
 
 public:
     explicit Workspace(SurfaceContainer *parent);
@@ -34,6 +36,9 @@ public:
 
     int currentIndex() const;
     void setCurrentIndex(int newCurrentIndex);
+    void switchToNext();
+    void switchToPrev();
+    void switchTo(int index);
 
     WorkspaceContainer *currentworkspace() const;
 

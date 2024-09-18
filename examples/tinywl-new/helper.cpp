@@ -440,6 +440,9 @@ bool Helper::beforeDisposeEvent(WSeat *seat, QWindow *, QInputEvent *event)
         if (QKeySequence(kevent->keyCombination()) == QKeySequence::Quit) {
             qApp->quit();
             return true;
+        } else if (event->modifiers() == Qt::MetaModifier && kevent->key() == Qt::Key_Right) {
+            m_workspace->switchToNext();
+            return true;
         }
     }
 
